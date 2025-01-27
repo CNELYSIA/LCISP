@@ -286,9 +286,9 @@ const span = reactive(11);
 <template>
   <div style="background-color: #e4e4e4; height: 100%; padding: 20px; position: absolute;width: 100%">
     <a-row :gutter="16">
-      <a-col :span="13" v-show="currentStep === 0">
+      <a-col :span="13" class="animated-card" :class="{ 'fade-out': currentStep !== 0 ,'fade-in': currentStep === 1}">
         <a-card>
-          <div id="map" v-show="currentStep === 0" ></div>
+          <div id="map"></div>
           <div id="MapSwitcher" v-show="currentStep === 0">
             <!-- 图层切换控件 -->
             <el-checkbox-group v-model="ifShow">
@@ -301,7 +301,7 @@ const span = reactive(11);
           </div>
         </a-card>
       </a-col>
-      <a-col :span="span">
+      <a-col :span="span" class="animated-card" :class="{ 'move-left': currentStep !== 0 }">
         <a-card class="formCard">
           <template #actions>
             <a-button type="primary" shape="round" @click="formPrev" :disabled="currentStep !== 1">
@@ -382,6 +382,37 @@ html, body{
   border-radius: 8px;
   overflow: hidden;
   padding: 10px
+}
+.animated-card {
+  transition: transform 0.8s cubic-bezier(0.42, 0, 0.47, 1),
+  width 0.8s cubic-bezier(0.42, 0, 0.47, 1),
+  opacity 0.8s cubic-bezier(0.42, 0, 0.47, 1),
+  visibility 0.6s cubic-bezier(0.42, 0, 0.47, 1);
+}
+
+.move-left {
+  transform: translateX(-118.5%);
+}
+
+.fade-out {
+  opacity: 1;
+  transform: scale(0.8); /* 缩小卡片 */
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.fade-in {
+  opacity: 0;
+  transform: scale(0.8); /* 缩小卡片 */
+  visibility: visible;
+  pointer-events: auto; /* 启用交互 */
+}
+
+/* 确保卡片在初始状态下可见 */
+a-card {
+  opacity: 1;
+  transform: scale(1);
+  visibility: visible;
 }
 </style>
 
