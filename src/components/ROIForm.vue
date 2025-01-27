@@ -2,7 +2,7 @@
 import {reactive, ref} from 'vue';
 import dayjs from 'dayjs';
 import { defineEmits } from 'vue'
-
+import {CloudUploadOutlined} from '@ant-design/icons-vue'
 const emit = defineEmits(['GeoJSONUrl'])
 
 
@@ -177,17 +177,6 @@ function updateURL() {
           </a-descriptions-item>
 
         </a-descriptions>
-
-
-<!--        <a-form-item label="选择日期范围" name="DatePicker">-->
-<!--          <a-range-picker :presets="rangePresets"  @change="DatePickerChange" />-->
-<!--        </a-form-item>-->
-<!--        <a-form-item label="选择日期范围" name="DatePicker">-->
-<!--          <a-range-picker :presets="rangePresets"  @change="DatePickerChange" />-->
-<!--        </a-form-item>-->
-<!--        <a-form-item label="选择日期范围" name="DatePicker">-->
-<!--          <a-range-picker :presets="rangePresets"  @change="DatePickerChange" />-->
-<!--        </a-form-item>-->
       </a-collapse-panel>
     </a-collapse>
 
@@ -200,41 +189,11 @@ function updateURL() {
         @change="handleChange"
         @drop="handleDrop"
     >
-      <p class="ant-upload-drag-icon">
-<!--        <inbox-outlined></inbox-outlined>-->
-      </p>
-      <p class="ant-upload-text">单击或拖动文件到此区域以上传</p>
-      <p class="ant-upload-hint">
-        仅支持PNG/JPG/TIFF/BMP格式影像
+      <p class="ant-upload-drag-icon" style="margin-top: 12px">
+        <CloudUploadOutlined />
       </p>
     </a-upload-dragger>
     </a-form-item>
-
-
-
-<!--    <a-form-item-->
-<!--        label="Username"-->
-<!--        name="username"-->
-<!--        :rules="[{ required: true, message: 'Please input your username!' }]"-->
-<!--    >-->
-<!--      <a-input v-model:value="formState.username" />-->
-<!--    </a-form-item>-->
-
-<!--    <a-form-item-->
-<!--        label="Password"-->
-<!--        name="password"-->
-<!--        :rules="[{ required: true, message: 'Please input your password!' }]"-->
-<!--    >-->
-<!--      <a-input-password v-model:value="formState.password" />-->
-<!--    </a-form-item>-->
-
-<!--    <a-form-item name="remember" :wrapper-col="{ offset: 8, span: 16 }">-->
-<!--      <a-checkbox v-model:checked="formState.remember">Remember me</a-checkbox>-->
-<!--    </a-form-item>-->
-
-<!--    <a-form-item :wrapper-col="{ offset: 8, span: 16 }">-->
-<!--      <a-button type="primary" html-type="submit">Submit</a-button>-->
-<!--    </a-form-item>-->
   </a-form>
 </template>
 

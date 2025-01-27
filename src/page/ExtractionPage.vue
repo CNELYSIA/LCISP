@@ -8,7 +8,7 @@ import DrawFeature from "../components/DrawFeature.vue";
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import Draw, {createBox} from 'ol/interaction/Draw';
-import {onMounted, ref} from "vue";
+import {onMounted, reactive, ref} from "vue";
 import { OverviewMap, ScaleLine, MousePosition, defaults } from "ol/control";
 import {createStringXY} from 'ol/coordinate';
 import 'ol/ol.css'
@@ -19,7 +19,11 @@ import {GeoJSON} from "ol/format";
 import axios from "axios";
 import {transform} from "ol/proj";
 import {notification} from "ant-design-vue";
-
+import {ElRadioButton,ElRadioGroup,ElCheckboxButton,ElCheckboxGroup} from 'element-plus'
+import 'element-plus/es/components/radio-button/style/css'
+import 'element-plus/es/components/radio-group/style/css'
+import 'element-plus/es/components/checkbox-button/style/css'
+import 'element-plus/es/components/checkbox-group/style/css'
 const map = ref(null)
 function initMap() {
   map.value = new Map({
@@ -30,6 +34,13 @@ function initMap() {
         source: new XYZ({
           url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
         })
+      }),
+      new Tile({
+        name: "天地图",
+        source: new XYZ({
+          url: "http://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=87522ceca48f384fc741bc830ebeace8"
+        }),
+        visible: false
       }),
     ],
     view: new View({
@@ -231,17 +242,66 @@ function formPrev() {
   if (currentStep.value !== 0)
     currentStep.value--;
 }
+
+// 图层切换
+let currentLayer = ref("高德");
+
+function changeLayer(e) {
+  console.log(e.target.value)
+  // 更换当前图层名字为所点单选框的值
+  currentLayer.value = e.target.value;
+  // 遍历map的图层数组，将name与当前图层名字一致的图层设为可见，其余设为不可见
+  map.value.getLayers().forEach(item => {
+    if (item.get("name") === currentLayer.value) {
+      item.setVisible(true);
+    } else if (item.get("name") === 'Vector') {
+      item.setVisible(true);
+    } else {
+      item.setVisible(false);
+    }
+  });
+  // ElMessage({
+  //   message: '切换完成',
+  //   type: 'success',
+  //   duration: 1000,
+  //   grouping: true,
+  //   offset: 400
+  // })
+}
+
+//矢量图层开关
+let ifShow = ref(true)
+
+function switchVector() {
+  // 遍历map的图层数组，将name与当前图层名字一致的图层设为可见，其余设为不可见
+  map.value.getLayers().forEach(item => {
+    if (item.get("name") === 'Vector')
+      item.setVisible(ifShow.value);
+  });
+
+}
+const span = reactive(11);
 </script>
 
 <template>
   <div style="background-color: #e4e4e4; height: 100%; padding: 20px; position: absolute;width: 100%">
     <a-row :gutter="16">
-      <a-col :span="10">
-        <a-card >
+      <a-col :span="13" v-show="currentStep === 0">
+        <a-card>
           <div id="map" v-show="currentStep === 0" ></div>
+          <div id="MapSwitcher" v-show="currentStep === 0">
+            <!-- 图层切换控件 -->
+            <el-checkbox-group v-model="ifShow">
+              <el-radio-group v-model="currentLayer" >
+                <el-radio-button label="高德" @change="changeLayer"/>
+                <el-radio-button label="天地图" @change="changeLayer"/>
+                <el-checkbox-button v-model="ifShow" checked label="矢量图层" @change="switchVector"></el-checkbox-button>
+              </el-radio-group>
+            </el-checkbox-group>
+          </div>
         </a-card>
       </a-col>
-      <a-col :span="14">
+      <a-col :span="span">
         <a-card class="formCard">
           <template #actions>
             <a-button type="primary" shape="round" @click="formPrev" :disabled="currentStep !== 1">
@@ -265,7 +325,7 @@ function formPrev() {
 
           </template>
           <template #title>
-            <div style="height: 15px"></div>
+            <div style="height: 5px"></div>
             <a-steps
                 v-model:current="currentStep"
                 type="navigation"
@@ -297,6 +357,7 @@ html, body{
 }
 :deep(.ant-card-body) {
   padding: 10px;
+  position: relative;
 }
 .formCard{
   height: 96.10vh;
@@ -311,6 +372,16 @@ html, body{
   border-radius: 5px;
   border: 1px solid rgba(255, 255, 255, 0.81);
   overflow: hidden;
+}
+#MapSwitcher {
+  position: absolute;
+  top: 2%;
+  right: 2%;
+  backdrop-filter: blur(10px);
+  box-shadow: rgba(142, 142, 142, 0.19) 0 6px 15px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 10px
 }
 </style>
 
