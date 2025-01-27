@@ -1,7 +1,9 @@
 <script setup>
-import {computed, reactive, ref} from 'vue';
+import {reactive, ref} from 'vue';
 import dayjs from 'dayjs';
+import { defineEmits } from 'vue'
 
+const emit = defineEmits(['GeoJSONUrl'])
 
 
 
@@ -91,7 +93,7 @@ const FilterOptions = [
 ]
 
 // 获取用户选取的时间范围
-function DatePickerChange(date, dateString) {
+function DatePickerChange(_, dateString) {
   ROIArgs.Option.StartDate = dateString[0];
   ROIArgs.Option.EndDate = dateString[1];
 }
@@ -102,7 +104,11 @@ const onFinish = values => {
 const onFinishFailed = errorInfo => {
   console.log('Failed:', errorInfo);
 };
+const Url = ref('')
 
+function updateURL() {
+  emit('GeoJSONUrl', Url)
+}
 </script>
 
 <template>
@@ -118,21 +124,18 @@ const onFinishFailed = errorInfo => {
     <a-divider :plain="true" style="color: #cccccc">选取ROI区域</a-divider>
     <a-descriptions bordered size="small" layout="vertical">
 
-      <a-descriptions-item label="GeoJSON">
-        <a-input v-model:value="ROIArgs.Option.Filter[1]" style="width: 100%" />
+      <a-descriptions-item label="GeoJSON上传" span="2" style="width: 100%">
+        <a-input v-model:value="Url" style="width: 100%" @pressEnter="updateURL" />
       </a-descriptions-item>
-      <a-descriptions-item label="Time">
+      <a-descriptions-item label="区域绘制" span="1" style="width: 100%">
         <slot></slot>
-      </a-descriptions-item>
-      <a-descriptions-item label="Time">
-        18:00:00
       </a-descriptions-item>
       <a-descriptions-item label="日期范围" span="3">
         <a-range-picker style="width: 100%" :presets="rangePresets" @change="DatePickerChange" />
       </a-descriptions-item>
     </a-descriptions>
 
-    <a-divider :dashed="true" />
+<div style="height: 10px"></div>
 
 
 
@@ -148,7 +151,7 @@ const onFinishFailed = errorInfo => {
                   :defaultValue="SensorOptions[0]"
               />
           </a-descriptions-item>
-          <a-descriptions-item label="筛选条件">
+          <a-descriptions-item label="筛选条件" span="1">
             <a-auto-complete
                 v-model="ROIArgs.Option.Filter[0]"
                 :data-source="FilterOptions"
@@ -157,19 +160,19 @@ const onFinishFailed = errorInfo => {
                 :defaultValue="FilterOptions[0]"
             />
           </a-descriptions-item>
-          <a-descriptions-item label="筛选阈值">
+          <a-descriptions-item label="筛选阈值" span="1">
             <a-input v-model:value="ROIArgs.Option.Filter[1]" style="width: 100%" />
           </a-descriptions-item>
-          <a-descriptions-item label="波段范围">
+          <a-descriptions-item label="波段范围" span="1">
             <a-input v-model:value="ROIArgs.Option.Bands" style="width: 100%" />
           </a-descriptions-item>
-          <a-descriptions-item label="坐标系统">
+          <a-descriptions-item label="坐标系统" span="1">
             <a-input v-model:value="ROIArgs.Option.Crs" style="width: 100%" />
           </a-descriptions-item>
-          <a-descriptions-item label="空间尺度">
+          <a-descriptions-item label="空间尺度" span="1">
             <a-input v-model:value="ROIArgs.Option.Scale" style="width: 100%" />
           </a-descriptions-item>
-          <a-descriptions-item label="保存名称">
+          <a-descriptions-item label="保存名称" span="1">
             <a-input v-model:value="ROIArgs.Option.FileName" style="width: 100%" />
           </a-descriptions-item>
 
@@ -237,6 +240,6 @@ const onFinishFailed = errorInfo => {
 
 <style scoped>
   .form{
-    height: 78.12vh;
+    height: 76.42vh;
   }
 </style>

@@ -15,7 +15,10 @@ import 'ol/ol.css'
 import { Map, View } from 'ol'
 import Tile from 'ol/layer/Tile'
 import XYZ from 'ol/source/XYZ'
-import {GeoJSON} from "ol/format.js";
+import {GeoJSON} from "ol/format";
+import axios from "axios";
+import {transform} from "ol/proj";
+import {notification} from "ant-design-vue";
 
 const map = ref(null)
 function initMap() {
@@ -52,6 +55,52 @@ function initMap() {
 onMounted(() => {
   initMap()
 })
+function requestJSON(data){
+  showVector(data)
+}
+
+//GeoJSON显示
+//region
+let JSONData = ref({})
+let JSONLayer = ref(null)
+let Center = ref([]) //原坐标单出拿出来一份备用，后期可删
+//endregion
+function showVector(data) {
+  axios.get(data.value)
+      .then((res) => {
+        JSONData.value = res.data;
+        Center.value = JSONData.value.features[0].properties.center;
+
+        JSONLayer.value = new VectorLayer({
+          name: "Vector",
+          source: new VectorSource({
+            url: data.value,
+            format: new GeoJSON()
+          }),
+        });
+
+        const Coordinate = transform(Center.value, 'EPSG:4326', 'EPSG:3857');
+        console.log(Center.value[0]);
+        console.log(Coordinate);
+
+        map.value.addLayer(JSONLayer.value);
+        map.value.getView().animate({
+          center: Coordinate,
+          zoom: 7,
+          rotation: undefined,
+          duration: 1000
+        });
+
+        // ElNotification({
+        //   title: 'Success',
+        //   message: 'ROI已显示',
+        //   type: 'success',
+        // });
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+}
 // 步骤条绑定
 const currentStep = ref(0);
 // 步骤条样式
@@ -76,11 +125,11 @@ function drawInteraction(val) {
     case "Cancel": // 取消绘制
       break;
     case "Clear": // 清空绘制
-      // Notification({
-      //   title: '状态',
-      //   message: '已清空',
-      //   type: 'success',
-      // });
+      notification.success({
+        message: '清除成功',
+        description:
+            '矢量要素已从地图上移除',
+      });
       vectorSource.value = null; // 矢量图层源置空
       if (vectorLayer.value) {
         vectorLayer.value.setSource(vectorSource.value); // 设置空的矢量图层源
@@ -162,7 +211,7 @@ const stepItem = [
   },
   {
     title: '参数设置',
-    description: '设置影像参数',
+    description: '设置提取参数',
     disabled: true,
   },
   {
@@ -216,6 +265,7 @@ function formPrev() {
 
           </template>
           <template #title>
+            <div style="height: 15px"></div>
             <a-steps
                 v-model:current="currentStep"
                 type="navigation"
@@ -224,7 +274,7 @@ function formPrev() {
             ></a-steps>
           </template>
             <div v-if="currentStep === 0">
-              <ROIForm>
+              <ROIForm @GeoJSONUrl="requestJSON">
                 <DrawFeature @drawInteraction="drawInteraction"></DrawFeature>
               </ROIForm>
             </div>
