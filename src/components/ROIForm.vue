@@ -69,19 +69,20 @@ const rangePresets = ref([
 // 影像参数
 const ROIArgs = reactive({
   Option:{
-    Sensor: 'LANDSAT/LC09/C02/T1_L2',
+    Sensor: 'COPERNICUS/S2_SR_HARMONIZED',
     FileName: Date.now().toString(),
     Crs: 'EPSG:4326',
     Scale: '30',
-    StartDate: '2021-01-01' ,
-    EndDate: '2021-12-31',
-    Bands: 'SR_B[1,2]',
+    StartDate: '2024-01-01' ,
+    EndDate: '2024-12-31',
+    Bands: 'B[2,3,4]',
     Filter:[
-        'CLOUD_COVER',
+        'CLOUDY_PIXEL_PERCENTAGE',
         '10'
     ],
     // 用户自定义影像
-    UserDefined: null,
+    UserImage: null,
+    // 用户自定义模块
     UserModule: null
   }
 });
