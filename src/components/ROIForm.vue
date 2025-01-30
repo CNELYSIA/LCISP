@@ -84,15 +84,18 @@ const ROIArgs = reactive({
     UserImage: null,
     // 用户自定义模块
     UserModule: null
-  }
+  },
+  Geojson: null
 });
 
 const SensorOptions = [
-'LANDSAT/LC09/C02/T1_L2',
+  'COPERNICUS/S2_SR_HARMONIZED',
+  'LANDSAT/LC09/C02/T1_L2',
 ]
 
 const FilterOptions = [
- 'CLOUD_COVER',
+  'CLOUDY_PIXEL_PERCENTAGE',
+  'CLOUD_COVER'
 ]
 
 // 获取用户选取的时间范围
@@ -116,8 +119,12 @@ function updateURL() {
 const AliUrl = "https://datav.aliyun.com/portal/school/atlas/area_selector"
 function jumpURL() {
   window.open(AliUrl)
+  console.log(ROIArgs)
 
 }
+
+// 暴露方法和属性给父组件
+defineExpose({ROIArgs})
 </script>
 
 <template>
@@ -153,7 +160,7 @@ function jumpURL() {
         <a-descriptions bordered size="small" layout="vertical">
           <a-descriptions-item label="影像来源" span="2">
               <a-auto-complete
-                  v-model="ROIArgs.Option.Sensor"
+                  v-model:value = "ROIArgs.Option.Sensor"
                   :data-source="SensorOptions"
                   placeholder="input here"
                   style="width: 100%"
@@ -189,7 +196,7 @@ function jumpURL() {
 
           <a-descriptions-item label="筛选条件" span="1">
             <a-auto-complete
-                v-model="ROIArgs.Option.Filter[0]"
+                v-model:value = "ROIArgs.Option.Filter[0]"
                 :data-source="FilterOptions"
                 placeholder="input here"
                 style="width: 100%"

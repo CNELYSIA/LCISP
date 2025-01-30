@@ -8,7 +8,7 @@ import DrawFeature from "../components/DrawFeature.vue";
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import Draw, {createBox} from 'ol/interaction/Draw';
-import {onMounted, reactive, ref} from "vue";
+import {onMounted, reactive, ref, getCurrentInstance} from "vue";
 import { OverviewMap, ScaleLine, MousePosition, defaults } from "ol/control";
 import {createStringXY} from 'ol/coordinate';
 import 'ol/ol.css'
@@ -25,6 +25,7 @@ import 'element-plus/es/components/radio-group/style/css'
 import 'element-plus/es/components/checkbox-button/style/css'
 import 'element-plus/es/components/checkbox-group/style/css'
 const map = ref(null)
+const {proxy} = getCurrentInstance()
 function initMap() {
   map.value = new Map({
     target: 'map',
@@ -234,8 +235,18 @@ const stepItem = [
 
 // 下一步
 function formNext() {
-  if (currentStep.value !== 1)
-    currentStep.value++;
+  if (currentStep.value !== 1){
+    nextLoading.value = true;
+    eeDownloadData.value.ROIArgs.Geojson = JSONData.value
+    proxy.postRequest('eeDownload/', eeDownloadData.value.ROIArgs).then((res) => {
+      currentStep.value++;
+      nextLoading.value = false;
+    })
+  }
+
+
+
+
 }
 // 上一步
 function formPrev() {
@@ -280,6 +291,12 @@ function switchVector() {
   });
 
 }
+
+// 接收子组件传来的值
+let eeDownloadData = ref()
+
+const nextLoading = ref(false)
+
 </script>
 
 <template>
@@ -307,7 +324,7 @@ function switchVector() {
               </template>
               上一步
             </a-button>
-            <a-button type="primary" shape="round" @click="formNext" :disabled="currentStep !== 0">
+            <a-button type="primary" shape="round" @click="formNext" :disabled="currentStep !== 0" :loading="nextLoading">
               <template #icon>
                 <RightOutlined />
               </template>
@@ -331,7 +348,7 @@ function switchVector() {
             ></a-steps>
           </template>
             <div v-if="currentStep === 0">
-              <ROIForm @GeoJSONUrl="requestJSON">
+              <ROIForm @GeoJSONUrl="requestJSON" ref="eeDownloadData" >
                 <DrawFeature @drawInteraction="drawInteraction"></DrawFeature>
               </ROIForm>
             </div>
