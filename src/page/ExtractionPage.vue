@@ -207,7 +207,7 @@ function drawFea(map, draw, layer, type, source, geometryFunction, freehand) {
     });
     json["features"][0]["geometry"]["coordinates"][0] = array
 
-    // JSONData.value = json
+    JSONData.value = json
   })
 
 
@@ -280,28 +280,25 @@ function switchVector() {
   });
 
 }
-const span = reactive(11);
 </script>
 
 <template>
-  <div style="background-color: #e4e4e4; height: 100%; padding: 20px; position: absolute;width: 100%">
+  <div class="puff-in-center" style="background-color: #e4e4e4; height: 100%; padding: 20px; position: absolute;width: 100%">
     <a-row :gutter="16">
       <a-col :span="13" class="animated-card" :class="{ 'fade-out': currentStep !== 0 ,'fade-in': currentStep === 1}">
         <a-card>
           <div id="map"></div>
           <div id="MapSwitcher" v-show="currentStep === 0">
             <!-- 图层切换控件 -->
-            <el-checkbox-group v-model="ifShow">
               <el-radio-group v-model="currentLayer" >
-                <el-radio-button label="高德" @change="changeLayer"/>
-                <el-radio-button label="天地图" @change="changeLayer"/>
-                <el-checkbox-button v-model="ifShow" checked label="矢量图层" @change="switchVector"></el-checkbox-button>
+                <el-radio-button value="高德" label="高德" @change="changeLayer"/>
+                <el-radio-button value="天地图" label="天地图" @change="changeLayer"/>
+                <el-checkbox-button v-model="ifShow" checked value="矢量图层" label="矢量图层" @change="switchVector"></el-checkbox-button>
               </el-radio-group>
-            </el-checkbox-group>
           </div>
         </a-card>
       </a-col>
-      <a-col :span="span" class="animated-card" :class="{ 'move-left': currentStep !== 0 }">
+      <a-col :span="11" class="animated-card" :class="{ 'move-left': currentStep !== 0 }">
         <a-card class="formCard">
           <template #actions>
             <a-button type="primary" shape="round" @click="formPrev" :disabled="currentStep !== 1">
@@ -351,6 +348,46 @@ const span = reactive(11);
 </template>
 
 <style scoped>
+
+.puff-in-center {
+  -webkit-animation: fade-in-left 0.6s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;
+  animation: fade-in-left 0.6s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;
+}
+
+@-webkit-keyframes fade-in-left {
+  0% {
+    -webkit-transform: translateX(-50px);
+    transform: translateX(-50px);
+    opacity: 0;
+    -webkit-filter: blur(40px);
+    filter: blur(40px);
+  }
+  100% {
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+    opacity: 1;
+    -webkit-filter: blur(0px);
+    filter: blur(0px);
+  }
+}
+@keyframes fade-in-left {
+  0% {
+    -webkit-transform: translateX(-50px);
+    transform: translateX(-50px);
+    opacity: 0;
+    -webkit-filter: blur(40);
+    filter: blur(40);
+  }
+  100% {
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+    opacity: 1;
+    -webkit-filter: blur(0);
+    filter: blur(0);
+  }
+}
+
+
 html, body{
   height: 100%;
   margin: 0;
@@ -399,6 +436,7 @@ html, body{
   transform: scale(0.8); /* 缩小卡片 */
   visibility: hidden;
   pointer-events: none;
+
 }
 
 .fade-in {

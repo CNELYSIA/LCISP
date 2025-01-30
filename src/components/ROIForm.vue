@@ -2,12 +2,13 @@
 import {reactive, ref} from 'vue';
 import dayjs from 'dayjs';
 import { defineEmits } from 'vue'
-import {CloudUploadOutlined} from '@ant-design/icons-vue'
+import {CloudUploadOutlined,InfoCircleOutlined,InfoCircleTwoTone, setTwoToneColor,UploadOutlined} from '@ant-design/icons-vue'
 const emit = defineEmits(['GeoJSONUrl'])
 
 
 
 import { message } from 'ant-design-vue';
+setTwoToneColor('#52c41a');
 const fileList = ref([]);
 const handleChange = info => {
   const status = info.file.status;
@@ -81,6 +82,7 @@ const ROIArgs = reactive({
     ],
     // 用户自定义影像
     UserDefined: null,
+    UserModule: null
   }
 });
 
@@ -109,6 +111,12 @@ const Url = ref('')
 function updateURL() {
   emit('GeoJSONUrl', Url)
 }
+
+const AliUrl = "https://datav.aliyun.com/portal/school/atlas/area_selector"
+function jumpURL() {
+  window.open(AliUrl)
+
+}
 </script>
 
 <template>
@@ -125,7 +133,7 @@ function updateURL() {
     <a-descriptions bordered size="small" layout="vertical">
 
       <a-descriptions-item label="GeoJSON上传" span="2" style="width: 100%">
-        <a-input v-model:value="Url" style="width: 100%" @pressEnter="updateURL" />
+        <a-input v-model:value="Url" style="width: 100%" @pressEnter="updateURL" @dblclick="jumpURL" />
       </a-descriptions-item>
       <a-descriptions-item label="区域绘制" span="1" style="width: 100%">
         <slot></slot>
@@ -142,7 +150,7 @@ function updateURL() {
     <a-collapse  :bordered="false">
       <a-collapse-panel header="高级选项">
         <a-descriptions bordered size="small" layout="vertical">
-          <a-descriptions-item label="影像来源" span="3">
+          <a-descriptions-item label="影像来源" span="2">
               <a-auto-complete
                   v-model="ROIArgs.Option.Sensor"
                   :data-source="SensorOptions"
@@ -151,6 +159,33 @@ function updateURL() {
                   :defaultValue="SensorOptions[0]"
               />
           </a-descriptions-item>
+          <a-descriptions-item label="处理模块" span="1">
+            <a-flex>
+              <a-upload-dragger
+                  v-model:fileList="fileList"
+                  name="file"
+                  :multiple="false"
+                  action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+                  @change="handleChange"
+                  style="width: 100%"
+              >
+                <a-button type="dashed" block>
+                  <template #icon>
+                    <CloudUploadOutlined />
+                  </template>
+                  上传
+                </a-button>
+              </a-upload-dragger>
+
+              <a-divider type="vertical" style="height: 100%;"></a-divider>
+              <a-tooltip color="#52c41a">
+                <template #title>模块命名</template>
+                <InfoCircleOutlined style="font-size: 24px" />
+              </a-tooltip>
+
+            </a-flex>
+          </a-descriptions-item>
+
           <a-descriptions-item label="筛选条件" span="1">
             <a-auto-complete
                 v-model="ROIArgs.Option.Filter[0]"
@@ -172,7 +207,7 @@ function updateURL() {
           <a-descriptions-item label="空间尺度" span="1">
             <a-input v-model:value="ROIArgs.Option.Scale" style="width: 100%" />
           </a-descriptions-item>
-          <a-descriptions-item label="保存名称" span="1">
+          <a-descriptions-item label="文件名称" span="1">
             <a-input v-model:value="ROIArgs.Option.FileName" style="width: 100%" />
           </a-descriptions-item>
 
