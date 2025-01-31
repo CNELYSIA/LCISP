@@ -1,43 +1,59 @@
 <script setup>
 import {reactive, ref} from 'vue';
 import dayjs from 'dayjs';
-import { defineEmits } from 'vue'
-import {CloudUploadOutlined,InfoCircleOutlined,InfoCircleTwoTone, setTwoToneColor,UploadOutlined} from '@ant-design/icons-vue'
+import {CloudUploadOutlined,InfoCircleOutlined, setTwoToneColor} from '@ant-design/icons-vue'
 const emit = defineEmits(['GeoJSONUrl'])
-
-
-
 import { message } from 'ant-design-vue';
+
+const collapsible = ref("header");
+
+
 setTwoToneColor('#52c41a');
+
 const fileList = ref([]);
-const handleChange = info => {
+
+const handleChangeImage = async (info) => {
   const status = info.file.status;
   if (status !== 'uploading') {
     console.log(info.file, info.fileList);
   }
   if (status === 'done') {
-    message.success(`${info.file.name} file uploaded successfully.`);
+    message.success(`${info.file.name} 文件上传成功`);
+    // 禁止其他操作
+    collapsible.value = 'disabled'
+    // 处理上传成功的响应数据
+    const response = info.file.response;
+    if (response && response.filename) {
+      ROIArgs.Option.UserImage = response.filename
+      // uploadedFilename.value = response.filename;
+    }
   } else if (status === 'error') {
-    message.error(`${info.file.name} file upload failed.`);
+    message.error(`${info.file.name} 文件上传失败`);
   }
 };
+
+const handleChangeModule = async (info) => {
+  const status = info.file.status;
+  if (status !== 'uploading') {
+    console.log(info.file, info.fileList);
+  }
+  if (status === 'done') {
+    message.success(`${info.file.name} 文件上传成功`);
+    // 处理上传成功的响应数据
+    const response = info.file.response;
+    if (response && response.filename) {
+      ROIArgs.Option.UserModule = response.filename
+      // console.log(response.filename)
+      // uploadedFilename.value = response.filename;
+    }
+  } else if (status === 'error') {
+    message.error(`${info.file.name} 文件上传失败`);
+  }
+};
+
 function handleDrop(e) {
   console.log(e);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // 时间快速选中
 const rangePresets = ref([
@@ -102,6 +118,9 @@ const FilterOptions = [
 function DatePickerChange(_, dateString) {
   ROIArgs.Option.StartDate = dateString[0];
   ROIArgs.Option.EndDate = dateString[1];
+  collapsible.value = 'header'
+  ROIArgs.Option.UserImage = null
+  fileList.value = []
 }
 
 const onFinish = values => {
@@ -113,6 +132,9 @@ const onFinishFailed = errorInfo => {
 const Url = ref('')
 
 function updateURL() {
+  collapsible.value = 'header'
+  ROIArgs.Option.UserImage = null
+  fileList.value = []
   emit('GeoJSONUrl', Url)
 }
 
@@ -122,9 +144,11 @@ function jumpURL() {
   console.log(ROIArgs)
 
 }
-
+const pyModule = ref([])
 // 暴露方法和属性给父组件
 defineExpose({ROIArgs})
+
+const maxCount = ref(1);
 </script>
 
 <template>
@@ -156,7 +180,7 @@ defineExpose({ROIArgs})
 
 
     <a-collapse  :bordered="false">
-      <a-collapse-panel header="高级选项">
+      <a-collapse-panel header="高级选项" :collapsible="collapsible">
         <a-descriptions bordered size="small" layout="vertical">
           <a-descriptions-item label="影像来源" span="2">
               <a-auto-complete
@@ -170,12 +194,16 @@ defineExpose({ROIArgs})
           <a-descriptions-item label="处理模块" span="1">
             <a-flex>
               <a-upload-dragger
-                  v-model:fileList="fileList"
+                  v-model:fileList="pyModule"
                   name="file"
                   :multiple="false"
-                  action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
-                  @change="handleChange"
                   style="width: 100%"
+                  accept=".py"
+                  action="http://127.0.0.1:8000/uploadPyModule"
+                  @change="handleChangeModule"
+                  @drop="handleDrop"
+                  :maxCount="maxCount"
+                  :showUploadList="false"
               >
                 <a-button type="dashed" block>
                   <template #icon>
@@ -187,7 +215,7 @@ defineExpose({ROIArgs})
 
               <a-divider type="vertical" style="height: 100%;"></a-divider>
               <a-tooltip color="#52c41a">
-                <template #title>模块命名</template>
+                <template #title>请确保上传的.py文件中只包含一个函数，且函数名必须为"userProcess"</template>
                 <InfoCircleOutlined style="font-size: 24px" />
               </a-tooltip>
 
@@ -228,9 +256,14 @@ defineExpose({ROIArgs})
     <a-upload-dragger
         v-model:fileList="fileList"
         name="file"
-        action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
-        @change="handleChange"
+        :multiple="false"
+        accept=".tif, .png, .jpg, .jpeg, .bmp"
+        action="http://127.0.0.1:8000/uploadImage"
+        @change="handleChangeImage"
         @drop="handleDrop"
+        list-type="picture"
+        :maxCount="maxCount"
+
     >
       <p class="ant-upload-drag-icon" style="margin-top: 12px">
         <CloudUploadOutlined />

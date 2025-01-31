@@ -1,5 +1,4 @@
 <script setup>
-import OLMap from "../components/OLMap.vue";
 import ROIForm from "../components/ROIForm.vue";
 import ArgsForm from "../components/ArgsForm.vue";
 import {CheckOutlined, LeftOutlined, RightOutlined} from '@ant-design/icons-vue';
@@ -8,9 +7,8 @@ import DrawFeature from "../components/DrawFeature.vue";
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import Draw, {createBox} from 'ol/interaction/Draw';
-import {onMounted, reactive, ref, getCurrentInstance} from "vue";
-import { OverviewMap, ScaleLine, MousePosition, defaults } from "ol/control";
-import {createStringXY} from 'ol/coordinate';
+import {onMounted, ref, getCurrentInstance} from "vue";
+import { ScaleLine, defaults } from "ol/control";
 import 'ol/ol.css'
 import { Map, View } from 'ol'
 import Tile from 'ol/layer/Tile'
@@ -18,8 +16,8 @@ import XYZ from 'ol/source/XYZ'
 import {GeoJSON} from "ol/format";
 import axios from "axios";
 import {transform} from "ol/proj";
-import {notification} from "ant-design-vue";
-import {ElRadioButton,ElRadioGroup,ElCheckboxButton,ElCheckboxGroup} from 'element-plus'
+import {message, notification} from "ant-design-vue";
+import {ElRadioButton,ElRadioGroup,ElCheckboxButton} from 'element-plus'
 import 'element-plus/es/components/radio-button/style/css'
 import 'element-plus/es/components/radio-group/style/css'
 import 'element-plus/es/components/checkbox-button/style/css'
@@ -103,14 +101,21 @@ function showVector(data) {
           duration: 1000
         });
 
-        // ElNotification({
-        //   title: 'Success',
-        //   message: 'ROI已显示',
-        //   type: 'success',
-        // });
+        notification.success({
+          message: 'ROI已显示',
+          description:
+              '请查看地图组件',
+          duration: 2,
+        });
       })
       .catch(function (error) {
         console.log(error);
+        notification.error({
+          message: 'ROI显示失败',
+          description:
+              '请检查Url地址是否有误',
+          duration: 2,
+        });
       });
 }
 // 步骤条绑定
@@ -135,12 +140,19 @@ function drawInteraction(val) {
   }
   switch (val) {
     case "Cancel": // 取消绘制
+      notification.success({
+        message: '取消成功',
+        description:
+            '绘制控件已从地图上移除',
+        duration: 2,
+      });
       break;
     case "Clear": // 清空绘制
       notification.success({
         message: '清除成功',
         description:
             '矢量要素已从地图上移除',
+        duration: 2,
       });
       vectorSource.value = null; // 矢量图层源置空
       if (vectorLayer.value) {
@@ -238,14 +250,29 @@ function formNext() {
   if (currentStep.value !== 1){
     nextLoading.value = true;
     eeDownloadData.value.ROIArgs.Geojson = JSONData.value
+    notification.success({
+      message: '请求已发送',
+      description:
+          '请稍等片刻',
+      duration: 2,
+    });
     proxy.postRequest('eeDownload/', eeDownloadData.value.ROIArgs).then((res) => {
-      currentStep.value++;
+      console.log(res)
+      if (res.status === 200){
+        currentStep.value++;
+        nextLoading.value = false;
+      }
+
+    }).catch(() => {
       nextLoading.value = false;
+      notification.error({
+        message: '执行失败',
+        description:
+            '请检查参数是否正确',
+        duration: 2,
+      });
     })
   }
-
-
-
 
 }
 // 上一步
@@ -271,15 +298,19 @@ function changeLayer(e) {
       item.setVisible(false);
     }
   });
-  // ElMessage({
-  //   message: '切换完成',
-  //   type: 'success',
-  //   duration: 1000,
-  //   grouping: true,
-  //   offset: 400
-  // })
+  message.success({
+    content: () => '切换成功',
+    style: {
+      marginLeft: '-50vw',
+    },
+  });
 }
-
+message.config({
+  top: '5vh',
+  duration: 2,
+  maxCount: 1,
+  rtl: true,
+});
 //矢量图层开关
 let ifShow = ref(true)
 
@@ -289,7 +320,12 @@ function switchVector() {
     if (item.get("name") === 'Vector')
       item.setVisible(ifShow.value);
   });
-
+  message.success({
+    content: () => '切换成功',
+    style: {
+      marginLeft: '-50vw',
+    },
+  });
 }
 
 // 接收子组件传来的值
@@ -302,7 +338,7 @@ const nextLoading = ref(false)
 <template>
   <div class="puff-in-center" style="background-color: #e4e4e4; height: 100%; padding: 20px; position: absolute;width: 100%">
     <a-row :gutter="16">
-      <a-col :span="13" class="animated-card" :class="{ 'fade-out': currentStep !== 0 ,'fade-in': currentStep === 1}">
+      <a-col :span="13" class="animated-card" :class="{'shrink-move-enlarge': currentStep !== 0, 'shrink-move-enlarge-out': currentStep !== 1}">
         <a-card>
           <div id="map"></div>
           <div id="MapSwitcher" v-show="currentStep === 0">
@@ -448,20 +484,52 @@ html, body{
   transform: translateX(-118.5%);
 }
 
-.fade-out {
-  opacity: 1;
-  transform: scale(0.8); /* 缩小卡片 */
-  visibility: hidden;
-  pointer-events: none;
-
+.shrink-move-enlarge {
+  animation: shrink-move-enlarge 0.8s cubic-bezier(0.42, 0, 0.47, 1) both;
+}
+.shrink-move-enlarge-out{
+  animation: shrink-move-enlarge-out 0.8s cubic-bezier(0.42, 0, 0.47, 1) both;
 }
 
-.fade-in {
-  opacity: 0;
-  transform: scale(0.8); /* 缩小卡片 */
-  visibility: visible;
-  pointer-events: auto; /* 启用交互 */
+@keyframes shrink-move-enlarge-out {
+  0% {
+    transform: scale(1) translateX(84.5%);
+    opacity: 1;
+  }
+  33% {
+    transform: scale(0.8) translateX(80%);
+    opacity: 0.8;
+  }
+  66% {
+    transform: scale(0.8) translateX(0);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1) translateX(0);
+    opacity: 1;
+  }
 }
+
+@keyframes shrink-move-enlarge {
+  0% {
+    transform: scale(1) translateX(0);
+    opacity: 1;
+  }
+  33% {
+    transform: scale(0.8) translateX(0);
+    opacity: 0.8;
+  }
+  66% {
+    transform: scale(0.8) translateX(80%);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1) translateX(84.5%);
+    opacity: 1;
+  }
+}
+
+
 
 /* 确保卡片在初始状态下可见 */
 a-card {
