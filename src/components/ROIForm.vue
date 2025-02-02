@@ -1,9 +1,15 @@
 <script setup>
-import {reactive, ref} from 'vue';
+import {createVNode, h, reactive, ref} from 'vue';
 import dayjs from 'dayjs';
-import {CloudUploadOutlined,InfoCircleOutlined, setTwoToneColor} from '@ant-design/icons-vue'
+import {
+  CloudUploadOutlined,
+  ExclamationCircleOutlined,
+  InfoCircleOutlined,
+  setTwoToneColor
+} from '@ant-design/icons-vue'
 const emit = defineEmits(['GeoJSONUrl'])
-import { message } from 'ant-design-vue';
+import {message, Modal} from 'ant-design-vue';
+import ArgsForm from "./ArgsForm.vue";
 
 const collapsible = ref("header");
 
@@ -105,6 +111,7 @@ const ROIArgs = reactive({
 });
 
 const SensorOptions = [
+  '谷歌地图瓦片',
   'COPERNICUS/S2_SR_HARMONIZED',
   'LANDSAT/LC09/C02/T1_L2',
 ]
@@ -149,6 +156,29 @@ const pyModule = ref([])
 defineExpose({ROIArgs})
 
 const maxCount = ref(1);
+
+function selectSensorChanged(value){
+  if (value === '谷歌地图瓦片'){
+    Modal.confirm({
+      title: '确定要使用谷歌地图瓦片作为数据源吗？',
+      icon: createVNode(ExclamationCircleOutlined),
+      content: h('div', {}, [
+        h('p', ''),
+        h('p', '使用时请将底图切换为谷歌地图，影像数据较大，请耐心等待'),
+        h('p', '若选取范围较大，建议使用平台提供的下载页下载，使用上传方式完成提取，减少时间浪费'),
+      ]),
+      okType: 'danger',
+      width: '550px',
+      style: {
+        "margin-top": '24vh',
+      },
+      bodyStyle: {
+        "margin-top": '13px',
+        "margin-left": '5px'
+      },
+    });
+  }
+}
 </script>
 
 <template>
@@ -189,6 +219,7 @@ const maxCount = ref(1);
                   placeholder="input here"
                   style="width: 100%"
                   :defaultValue="SensorOptions[0]"
+                  @change="selectSensorChanged"
               />
           </a-descriptions-item>
           <a-descriptions-item label="处理模块" span="1">

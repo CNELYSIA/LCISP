@@ -1,5 +1,5 @@
 <script setup>
-import { reactive } from 'vue';
+import {getCurrentInstance, reactive} from 'vue';
 const formState = reactive({
   username: '',
   password: '',
@@ -11,43 +11,30 @@ const onFinish = values => {
 const onFinishFailed = errorInfo => {
   console.log('Failed:', errorInfo);
 };
+
+
+// 定义Props
+const props = defineProps({
+  Args: Object
+})
+
+const imgSrc = "http://127.0.0.1:8000/getThumbnail/" + props.Args.file
+
 </script>
 
 <template>
-  <h1>参数页</h1>
-  <a-form
-      :model="formState"
-      name="ArgsForm"
-      :label-col="{ span: 8 }"
-      :wrapper-col="{ span: 16 }"
-      autocomplete="off"
-      @finish="onFinish"
-      @finishFailed="onFinishFailed"
-  >
-    <a-form-item
-        label="Username"
-        name="username"
-        :rules="[{ required: true, message: 'Please input your username!' }]"
-    >
-      <a-input v-model:value="formState.username" />
-    </a-form-item>
+  <a-descriptions bordered size="small" layout="vertical">
 
-    <a-form-item
-        label="Password"
-        name="password"
-        :rules="[{ required: true, message: 'Please input your password!' }]"
-    >
-      <a-input-password v-model:value="formState.password" />
-    </a-form-item>
+    <a-descriptions-item label="模型类别" span="2" style="width: 100%">
 
-    <a-form-item name="remember" :wrapper-col="{ offset: 8, span: 16 }">
-      <a-checkbox v-model:checked="formState.remember">Remember me</a-checkbox>
-    </a-form-item>
+    </a-descriptions-item>
+    <a-descriptions-item label="提取类别" span="1" style="width: 100%">
 
-    <a-form-item :wrapper-col="{ offset: 8, span: 16 }">
-      <a-button type="primary" html-type="submit">Submit</a-button>
-    </a-form-item>
-  </a-form>
+    </a-descriptions-item>
+    <a-descriptions-item label="权重文件" span="3">
+
+    </a-descriptions-item>
+  </a-descriptions>
 </template>
 
 <style scoped>

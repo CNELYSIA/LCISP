@@ -35,6 +35,13 @@ function initMap() {
         })
       }),
       new Tile({
+        name: "谷歌地图",
+        source: new XYZ({
+          url: "https://mt2.google.com/vt/lyrs=s@157&hl=en&gl=us&src=app&x={x}&y={y}&z={z}"
+        }),
+        visible: false
+      }),
+      new Tile({
         name: "天地图",
         source: new XYZ({
           url: "http://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=87522ceca48f384fc741bc830ebeace8"
@@ -214,6 +221,7 @@ function drawFea(map, draw, layer, type, source, geometryFunction, freehand) {
       ]
     }
     let array = drawJSON["geometry"]["coordinates"][0]
+    console.log(array)
     array = array.map(items => items.map(item => item / 20037508.34 * 180))
     array = array.map(function (items) {
       return [items[0], 180 / Math.PI * (2 * Math.atan(Math.exp(items[1] * Math.PI / 180)) - Math.PI / 2)]
@@ -221,6 +229,7 @@ function drawFea(map, draw, layer, type, source, geometryFunction, freehand) {
     json["features"][0]["geometry"]["coordinates"][0] = array
 
     JSONData.value = json
+    console.log(json)
   })
 
 
@@ -257,12 +266,16 @@ function formNext() {
       duration: 2,
     });
     proxy.postRequest('eeDownload/', eeDownloadData.value.ROIArgs).then((res) => {
-      console.log(res)
+      console.log(res.data)
       if (res.status === 200){
         currentStep.value++;
         nextLoading.value = false;
+        Args.value = res.data
+        imgSrc = "http://127.0.0.1:8000/getThumbnail/" + res.data.file
+        setTimeout(() => {
+          mapShow.value = false;
+        }, 400);
       }
-
     }).catch(() => {
       nextLoading.value = false;
       notification.error({
@@ -279,6 +292,9 @@ function formNext() {
 function formPrev() {
   if (currentStep.value !== 0)
     currentStep.value--;
+  setTimeout(() => {
+    mapShow.value = true;
+  }, 400);
 }
 
 // 图层切换
@@ -332,26 +348,32 @@ function switchVector() {
 let eeDownloadData = ref()
 
 const nextLoading = ref(false)
-
+let Args = ref(null)
+let imgSrc = ref("")
+const mapShow = ref(true)
 </script>
 
 <template>
   <div class="puff-in-center" style="background-color: #e4e4e4; height: 100%; padding: 20px; position: absolute;width: 100%">
     <a-row :gutter="16">
-      <a-col :span="13" class="animated-card" :class="{'shrink-move-enlarge': currentStep !== 0, 'shrink-move-enlarge-out': currentStep !== 1}">
+      <a-col :span="13" class="animated-card" :class="{'shrink-move-enlarge': currentStep === 1, 'shrink-move-enlarge-out': currentStep === 0}">
         <a-card>
-          <div id="map"></div>
-          <div id="MapSwitcher" v-show="currentStep === 0">
+          <div id="map" v-show="mapShow" ></div>
+          <div id="MapSwitcher" v-show="mapShow">
             <!-- 图层切换控件 -->
               <el-radio-group v-model="currentLayer" >
                 <el-radio-button value="高德" label="高德" @change="changeLayer"/>
                 <el-radio-button value="天地图" label="天地图" @change="changeLayer"/>
+                <el-radio-button value="谷歌地图" label="谷歌地图" @change="changeLayer"/>
                 <el-checkbox-button v-model="ifShow" checked value="矢量图层" label="矢量图层" @change="switchVector"></el-checkbox-button>
               </el-radio-group>
           </div>
+          <div id="imgContain" v-show="!mapShow">
+            <a-image :src=imgSrc />
+          </div>
         </a-card>
       </a-col>
-      <a-col :span="11" class="animated-card" :class="{ 'move-left': currentStep !== 0 }">
+      <a-col :span="11" class="animated-card" :class="{ 'move-left': currentStep === 1 }">
         <a-card class="formCard">
           <template #actions>
             <a-button type="primary" shape="round" @click="formPrev" :disabled="currentStep !== 1">
@@ -389,7 +411,7 @@ const nextLoading = ref(false)
               </ROIForm>
             </div>
           <div v-if="currentStep === 1">
-            <ArgsForm></ArgsForm>
+            <ArgsForm :Args="Args"></ArgsForm>
           </div>
           <div v-if="currentStep === 2">
             <ResultForm></ResultForm>
@@ -458,6 +480,12 @@ html, body{
 }
 
 #map {
+  height: 93.8vh; /* 设置地图高度为视口高度 */
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.81);
+  overflow: hidden;
+}
+#imgContain{
   height: 93.8vh; /* 设置地图高度为视口高度 */
   border-radius: 5px;
   border: 1px solid rgba(255, 255, 255, 0.81);
