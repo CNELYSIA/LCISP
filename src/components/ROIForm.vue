@@ -206,9 +206,6 @@ function selectSensorChanged(value){
     </a-descriptions>
 
 <div style="height: 10px"></div>
-
-
-
     <a-collapse  :bordered="false">
       <a-collapse-panel header="高级选项" :collapsible="collapsible">
         <a-descriptions bordered size="small" layout="vertical">

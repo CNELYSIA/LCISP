@@ -290,11 +290,19 @@ function formNext() {
 }
 // 上一步
 function formPrev() {
-  if (currentStep.value !== 0)
+  if (currentStep.value === 1){
     currentStep.value--;
-  setTimeout(() => {
-    mapShow.value = true;
-  }, 400);
+    setTimeout(() => {
+      mapShow.value = true;
+    }, 400);
+  }
+  if (currentStep.value === 2){
+    currentStep.value--;
+    setTimeout(() => {
+      mapShow.value = false;
+    }, 400);
+  }
+
 }
 
 // 图层切换
@@ -356,7 +364,7 @@ const mapShow = ref(true)
 <template>
   <div class="puff-in-center" style="background-color: #e4e4e4; height: 100%; padding: 20px; position: absolute;width: 100%">
     <a-row :gutter="16">
-      <a-col :span="13" class="animated-card" :class="{'shrink-move-enlarge': currentStep === 1, 'shrink-move-enlarge-out': currentStep === 0}">
+      <a-col :span="13" class="animated-card" :class="{'shrink-move-enlarge': currentStep !== 0, 'shrink-move-enlarge-out': currentStep !== 1}">
         <a-card>
           <div id="map" v-show="mapShow" ></div>
           <div id="MapSwitcher" v-show="mapShow">
@@ -369,14 +377,20 @@ const mapShow = ref(true)
               </el-radio-group>
           </div>
           <div id="imgContain" v-show="!mapShow">
-            <a-image :src=imgSrc />
+            <div v-show="currentStep === 1">
+              <a-image  :src=imgSrc />
+            </div>
+            <div v-show="currentStep === 2">
+              <a-image  :src=imgSrc />
+            </div>
+
           </div>
         </a-card>
       </a-col>
       <a-col :span="11" class="animated-card" :class="{ 'move-left': currentStep === 1 }">
         <a-card class="formCard">
           <template #actions>
-            <a-button type="primary" shape="round" @click="formPrev" :disabled="currentStep !== 1">
+            <a-button type="primary" shape="round" @click="formPrev" :disabled="currentStep === 0">
               <template #icon>
                 <LeftOutlined />
               </template>
@@ -388,7 +402,7 @@ const mapShow = ref(true)
               </template>
               下一步
             </a-button>
-            <a-button type="primary" shape="round" :disabled="currentStep !== 1">
+            <a-button type="primary" shape="round" :disabled="currentStep !== 1" @click="currentStep = 2">
               <template #icon>
                 <CheckOutlined/>
               </template>
