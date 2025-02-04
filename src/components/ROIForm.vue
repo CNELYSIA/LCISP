@@ -17,7 +17,7 @@ const collapsible = ref("header");
 setTwoToneColor('#52c41a');
 
 const fileList = ref([]);
-
+let activeKey = ref(1);
 const handleChangeImage = async (info) => {
   const status = info.file.status;
   if (status !== 'uploading') {
@@ -32,6 +32,7 @@ const handleChangeImage = async (info) => {
     if (response && response.filename) {
       ROIArgs.Option.UserImage = response.filename
       // uploadedFilename.value = response.filename;
+      activeKey.value = 2
     }
   } else if (status === 'error') {
     message.error(`${info.file.name} 文件上传失败`);
@@ -126,20 +127,16 @@ function DatePickerChange(_, dateString) {
   ROIArgs.Option.StartDate = dateString[0];
   ROIArgs.Option.EndDate = dateString[1];
   collapsible.value = 'header'
+  activeKey.value = 1
   ROIArgs.Option.UserImage = null
   fileList.value = []
 }
 
-const onFinish = values => {
-  console.log('Success:', values);
-};
-const onFinishFailed = errorInfo => {
-  console.log('Failed:', errorInfo);
-};
 const Url = ref('')
 
 function updateURL() {
   collapsible.value = 'header'
+  activeKey.value = 1
   ROIArgs.Option.UserImage = null
   fileList.value = []
   emit('GeoJSONUrl', Url)
@@ -206,7 +203,7 @@ function selectSensorChanged(value){
     </a-descriptions>
 
 <div style="height: 10px"></div>
-    <a-collapse  :bordered="false">
+    <a-collapse  :bordered="false" key="1" v-model:activeKey="activeKey">
       <a-collapse-panel header="高级选项" :collapsible="collapsible">
         <a-descriptions bordered size="small" layout="vertical">
           <a-descriptions-item label="影像来源" span="2">
@@ -303,6 +300,6 @@ function selectSensorChanged(value){
 
 <style scoped>
   .form{
-    height: 76.42vh;
+    height: 77.60vh;
   }
 </style>

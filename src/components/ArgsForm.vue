@@ -2,17 +2,6 @@
 import {getCurrentInstance, reactive,ref} from 'vue';
 import {CloudUploadOutlined} from "@ant-design/icons-vue";
 import {message} from "ant-design-vue";
-const formState = reactive({
-  username: '',
-  password: '',
-  remember: true,
-});
-const onFinish = values => {
-  console.log('Success:', values);
-};
-const onFinishFailed = errorInfo => {
-  console.log('Failed:', errorInfo);
-};
 
 
 // 定义Props
@@ -27,6 +16,8 @@ const ExtractArgs = reactive({
   Extraction: '耕地',
   Weights: null,
 });
+
+
 
 const handleChangePth = async (info) => {
   const status = info.file.status;
@@ -46,18 +37,18 @@ const handleChangePth = async (info) => {
 };
 
 const ModelOptions = [
-'langSAM'
+'langSAM','YoloSAM'
 ]
 const ExtractOptions = [
   '耕地','道路','屋顶'
 ]
 
 let fileList = ref([])
+defineExpose({ExtractArgs})
 </script>
 
 <template>
   <div id="ArgsForm">
-    <a-button type="primary" @click="console.log(ExtractArgs)">ceshi</a-button>
     <a-descriptions bordered size="small" layout="vertical">
 
       <a-descriptions-item label="模型类别" span="2" style="width: 50%">
@@ -106,6 +97,6 @@ let fileList = ref([])
 
 <style scoped>
 #ArgsForm{
-  height: 76.42vh;
+  height: 79.28vh;
 }
 </style>

@@ -1,27 +1,28 @@
 <script setup>
 import ROIForm from "../components/ROIForm.vue";
 import ArgsForm from "../components/ArgsForm.vue";
-import {CheckOutlined, LeftOutlined, RightOutlined} from '@ant-design/icons-vue';
+import {CheckOutlined, DownloadOutlined, LeftOutlined, RightOutlined} from '@ant-design/icons-vue';
 import ResultForm from "../components/ResultForm.vue";
 import DrawFeature from "../components/DrawFeature.vue";
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import Draw, {createBox} from 'ol/interaction/Draw';
-import {onMounted, ref, getCurrentInstance} from "vue";
-import { ScaleLine, defaults } from "ol/control";
+import {getCurrentInstance, onMounted, reactive, ref} from "vue";
+import {defaults, ScaleLine} from "ol/control";
 import 'ol/ol.css'
-import { Map, View } from 'ol'
+import {Map, View} from 'ol'
 import Tile from 'ol/layer/Tile'
 import XYZ from 'ol/source/XYZ'
 import {GeoJSON} from "ol/format";
 import axios from "axios";
 import {transform} from "ol/proj";
 import {message, notification} from "ant-design-vue";
-import {ElRadioButton,ElRadioGroup,ElCheckboxButton} from 'element-plus'
+import {ElCheckboxButton, ElRadioButton, ElRadioGroup} from 'element-plus'
 import 'element-plus/es/components/radio-button/style/css'
 import 'element-plus/es/components/radio-group/style/css'
 import 'element-plus/es/components/checkbox-button/style/css'
 import 'element-plus/es/components/checkbox-group/style/css'
+
 const map = ref(null)
 const {proxy} = getCurrentInstance()
 function initMap() {
@@ -253,7 +254,17 @@ const stepItem = [
     disabled: true,
   },
 ];
-
+let imgInfo = reactive({
+  height: '',
+  width: '',
+  bands: '',
+  resolution: '',
+  driver: '',
+  dtype: '',
+  proj: '',
+  trans: '',
+  area: ''
+});
 // 下一步
 function formNext() {
   if (currentStep.value !== 1){
@@ -272,9 +283,24 @@ function formNext() {
         nextLoading.value = false;
         Args.value = res.data
         imgSrc = "http://127.0.0.1:8000/getThumbnail/" + res.data.file
+        proxy.getRequest(`getInfo/?filename=${res.data.file}`).then((response) => {
+          imgInfo.height = response.data.height
+          imgInfo.width = response.data.width
+          imgInfo.bands = response.data.bands
+          imgInfo.resolution = response.data.resolution
+          imgInfo.driver = response.data.driver
+          imgInfo.dtype = response.data.dtype
+          imgInfo.proj = response.data.proj
+          imgInfo.trans = response.data.trans
+          imgInfo.area = response.data.area
+
+          console.log(imgInfo)
+
+        })
         setTimeout(() => {
           mapShow.value = false;
         }, 400);
+
       }
     }).catch(() => {
       nextLoading.value = false;
@@ -288,6 +314,7 @@ function formNext() {
   }
 
 }
+
 // 上一步
 function formPrev() {
   if (currentStep.value === 1){
@@ -354,11 +381,57 @@ function switchVector() {
 
 // 接收子组件传来的值
 let eeDownloadData = ref()
-
+let extractionData = ref()
 const nextLoading = ref(false)
 let Args = ref(null)
 let imgSrc = ref("")
 const mapShow = ref(true)
+function submit() {
+  submitLoading.value = true;
+  proxy.postRequest('predict/', extractionData.value.ExtractArgs).then((res) => {
+    if (res.status === 200){
+      currentStep.value = 2;
+      oriSrc = "http://127.0.0.1:8000/getThumbnail/" + res.data.Origin
+      mixSrc = "http://127.0.0.1:8000/getThumbnail/" + res.data.Mixture
+      submitLoading.value = false;
+    }
+  }).catch(() => {
+    submitLoading.value = false;
+    notification.error({
+      message: '执行失败',
+      description:
+          '请检查参数是否正确',
+      duration: 2,
+    });
+  })
+}
+let mixSrc = ref("")
+let oriSrc = ref("")
+let submitLoading = ref(false)
+const downloadLink = ref(null);
+function downloadIMG(){
+  proxy.getRequest(`download/?filename=${extractionData.value.ExtractArgs.FileName}`).then((res) => {
+    if (res.status === 200) {
+      notification.success({
+        message: '开始下载',
+        duration: 2,
+      });
+      // 获取文件的静态路径
+      // 设置隐藏的 a 标签的 href 属性
+      downloadLink.value.href = `http://127.0.0.1:8000/download/?filename=${extractionData.value.ExtractArgs.FileName}`
+      downloadLink.value.download = extractionData.value.ExtractArgs.FileName; // 设置下载文件名，确保正确解码
+      // 触发点击事件以开始下载
+      downloadLink.value.click();
+    }
+  }).catch(() => {
+    notification.error({
+      message: '下载失败',
+      description:
+          '请检查网络连接是否正常',
+      duration: 2,
+    });
+  })
+}
 </script>
 
 <template>
@@ -378,10 +451,40 @@ const mapShow = ref(true)
           </div>
           <div id="imgContain" v-show="!mapShow">
             <div v-show="currentStep === 1">
-              <a-image  :src=imgSrc />
+              <a-card hoverable style="width: 98%;margin-top: 1%;margin-left: 1%" >
+                <template #cover>
+                  <a-image  :src=imgSrc />
+                </template>
+                <template #actions>
+                  <DownloadOutlined key="download" @click="downloadIMG" style="font-size: 24px" />
+                </template>
+                <a-card-meta>
+                  <template #extra><a href="#">more</a></template>
+                  <template #description>
+                    <p>
+                      为保证显示效果，缩略图可能存在一定变形，可点击进行预览
+                     <h4>缩略图与原始影像在清晰度上具有一定差距，实际提取将使用原始影像，请放心使用</h4>
+                    </p>
+                    <a-descriptions bordered layout="vertical"size="small">
+                      <a-descriptions-item label="图像宽度">{{imgInfo.width}}</a-descriptions-item>
+                      <a-descriptions-item label="图像高度">{{imgInfo.height}}</a-descriptions-item>
+                      <a-descriptions-item label="图像分辨率">{{imgInfo.resolution}}</a-descriptions-item>
+                      <a-descriptions-item label="通道数">{{imgInfo.bands}}</a-descriptions-item>
+                      <a-descriptions-item label="几何变换参数">{{imgInfo.trans}}</a-descriptions-item>
+                      <a-descriptions-item label="实地区域面积/平方度">{{imgInfo.area}}</a-descriptions-item>
+                      <a-descriptions-item label="投影参考">
+                        {{imgInfo.proj}}
+                      </a-descriptions-item>
+                    </a-descriptions>
+                  </template>
+                </a-card-meta>
+              </a-card>
+              <!-- 隐藏的 a 标签 -->
+              <a ref="downloadLink" style="display: none;" target="_blank"></a>
             </div>
             <div v-show="currentStep === 2">
-              <a-image  :src=imgSrc />
+              <a-image  :src=mixSrc />
+              <a-image  :src=oriSrc />
             </div>
 
           </div>
@@ -402,7 +505,7 @@ const mapShow = ref(true)
               </template>
               下一步
             </a-button>
-            <a-button type="primary" shape="round" :disabled="currentStep !== 1" @click="currentStep = 2">
+            <a-button type="primary" shape="round" :disabled="currentStep !== 1" @click="submit" :loading="submitLoading">
               <template #icon>
                 <CheckOutlined/>
               </template>
@@ -425,7 +528,7 @@ const mapShow = ref(true)
               </ROIForm>
             </div>
           <div v-if="currentStep === 1">
-            <ArgsForm :Args="Args"></ArgsForm>
+            <ArgsForm :Args="Args" ref="extractionData"></ArgsForm>
           </div>
           <div v-if="currentStep === 2">
             <ResultForm></ResultForm>
@@ -578,6 +681,9 @@ a-card {
   opacity: 1;
   transform: scale(1);
   visibility: visible;
+}
+:deep(.ant-image-img){
+  height: 45.2vh;
 }
 </style>
 
