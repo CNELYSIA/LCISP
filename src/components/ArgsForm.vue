@@ -37,7 +37,7 @@ const handleChangePth = async (info) => {
 };
 
 const ModelOptions = [
-'langSAM','YoloSAM'
+'LangSAM','YoloSAM'
 ]
 const ExtractOptions = [
   '耕地','道路','屋顶'

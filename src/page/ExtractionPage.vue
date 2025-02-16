@@ -17,11 +17,12 @@ import {GeoJSON} from "ol/format";
 import axios from "axios";
 import {transform} from "ol/proj";
 import {message, notification} from "ant-design-vue";
-import {ElCheckboxButton, ElRadioButton, ElRadioGroup} from 'element-plus'
+import {ElCheckboxButton, ElRadioButton, ElRadioGroup, ElCard} from 'element-plus'
 import 'element-plus/es/components/radio-button/style/css'
 import 'element-plus/es/components/radio-group/style/css'
 import 'element-plus/es/components/checkbox-button/style/css'
 import 'element-plus/es/components/checkbox-group/style/css'
+import 'element-plus/es/components/card/style/css'
 
 const map = ref(null)
 const {proxy} = getCurrentInstance()
@@ -32,7 +33,14 @@ function initMap() {
       new Tile({
         name: "高德",
         source: new XYZ({
-          url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+          url: 'http://t0.tianditu.com/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=87522ceca48f384fc741bc830ebeace8',
+        })
+      }),
+      new Tile({
+        name: '高德',
+        source: new XYZ({
+          url: 'http://t0.tianditu.com/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=87522ceca48f384fc741bc830ebeace8',
+          wrapX: false
         })
       }),
       new Tile({
@@ -53,7 +61,11 @@ function initMap() {
     view: new View({
       projection: "EPSG:3857",
       center: [13045531.126063729, 4394596.281632625],
-      zoom: 15
+      zoom: 15,
+      //设置缩放级别为整数
+      constrainResolution: true,
+      //关闭无级缩放地图
+      smoothResolutionConstraint: false,
     }),
     controls: defaults({
       // 添加其他控件
@@ -378,7 +390,7 @@ function switchVector() {
     },
   });
 }
-
+const maskInfo = ref('')
 // 接收子组件传来的值
 let eeDownloadData = ref()
 let extractionData = ref()
@@ -386,14 +398,24 @@ const nextLoading = ref(false)
 let Args = ref(null)
 let imgSrc = ref("")
 const mapShow = ref(true)
+let downloadMixName = ref("")
+let downloadOriName = ref("")
 function submit() {
   submitLoading.value = true;
   proxy.postRequest('predict/', extractionData.value.ExtractArgs).then((res) => {
     if (res.status === 200){
-      currentStep.value = 2;
+
       oriSrc = "http://127.0.0.1:8000/getThumbnail/" + res.data.Origin
       mixSrc = "http://127.0.0.1:8000/getThumbnail/" + res.data.Mixture
+      downloadMixName = res.data.Mixture
+      downloadOriName = res.data.Origin
       submitLoading.value = false;
+      proxy.getRequest(`getMaskInfo/?filename=${res.data.Origin}`).then((response) => {
+        if (response.status === 200){
+          maskInfo.value = response.data
+          currentStep.value = 2;
+        }
+      })
     }
   }).catch(() => {
     submitLoading.value = false;
@@ -410,27 +432,33 @@ let oriSrc = ref("")
 let submitLoading = ref(false)
 const downloadLink = ref(null);
 function downloadIMG(){
-  proxy.getRequest(`download/?filename=${extractionData.value.ExtractArgs.FileName}`).then((res) => {
-    if (res.status === 200) {
-      notification.success({
-        message: '开始下载',
-        duration: 2,
-      });
       // 获取文件的静态路径
       // 设置隐藏的 a 标签的 href 属性
       downloadLink.value.href = `http://127.0.0.1:8000/download/?filename=${extractionData.value.ExtractArgs.FileName}`
       downloadLink.value.download = extractionData.value.ExtractArgs.FileName; // 设置下载文件名，确保正确解码
       // 触发点击事件以开始下载
       downloadLink.value.click();
-    }
-  }).catch(() => {
-    notification.error({
-      message: '下载失败',
-      description:
-          '请检查网络连接是否正常',
-      duration: 2,
-    });
-  })
+
+}
+const downloadLinkMix = ref(null);
+const downloadLinkOri = ref(null);
+function downloadMix(){
+  // 获取文件的静态路径
+  // 设置隐藏的 a 标签的 href 属性
+  downloadLinkMix.value.href = `http://127.0.0.1:8000/download/?filename=${downloadMixName}`
+  downloadLinkMix.value.download = downloadMixName // 设置下载文件名，确保正确解码
+  // 触发点击事件以开始下载
+  downloadLinkMix.value.click();
+
+}
+function downloadOri(){
+  // 获取文件的静态路径
+  // 设置隐藏的 a 标签的 href 属性
+  downloadLinkOri.value.href = `http://127.0.0.1:8000/download/?filename=${downloadOriName}`
+  downloadLinkOri.value.download = downloadOriName; // 设置下载文件名，确保正确解码
+  // 触发点击事件以开始下载
+  downloadLinkOri.value.click();
+
 }
 </script>
 
@@ -442,9 +470,9 @@ function downloadIMG(){
           <div id="map" v-show="mapShow" ></div>
           <div id="MapSwitcher" v-show="mapShow">
             <!-- 图层切换控件 -->
-              <el-radio-group v-model="currentLayer" >
-                <el-radio-button value="高德" label="高德" @change="changeLayer"/>
-                <el-radio-button value="天地图" label="天地图" @change="changeLayer"/>
+               <el-radio-group v-model="currentLayer" >
+                <el-radio-button value="高德" label="天地图矢量" @change="changeLayer"/>
+                <el-radio-button value="天地图" label="天地图影像" @change="changeLayer"/>
                 <el-radio-button value="谷歌地图" label="谷歌地图" @change="changeLayer"/>
                 <el-checkbox-button v-model="ifShow" checked value="矢量图层" label="矢量图层" @change="switchVector"></el-checkbox-button>
               </el-radio-group>
@@ -459,12 +487,9 @@ function downloadIMG(){
                   <DownloadOutlined key="download" @click="downloadIMG" style="font-size: 24px" />
                 </template>
                 <a-card-meta>
-                  <template #extra><a href="#">more</a></template>
                   <template #description>
-                    <p>
-                      为保证显示效果，缩略图可能存在一定变形，可点击进行预览
+                      <h4>为保证显示效果，缩略图可能存在一定变形，可点击进行预览</h4>
                      <h4>缩略图与原始影像在清晰度上具有一定差距，实际提取将使用原始影像，请放心使用</h4>
-                    </p>
                     <a-descriptions bordered layout="vertical"size="small">
                       <a-descriptions-item label="图像宽度">{{imgInfo.width}}</a-descriptions-item>
                       <a-descriptions-item label="图像高度">{{imgInfo.height}}</a-descriptions-item>
@@ -483,8 +508,65 @@ function downloadIMG(){
               <a ref="downloadLink" style="display: none;" target="_blank"></a>
             </div>
             <div v-show="currentStep === 2">
-              <a-image  :src=mixSrc />
-              <a-image  :src=oriSrc />
+              <a-row>
+                <a-col :span="12">
+                  <!-- 隐藏的 a 标签 -->
+                  <a ref="downloadLinkMix" style="display: none;" target="_blank"></a>
+                  <el-card  shadow="hover">
+                    <template #header>
+                      <div class="card-header" style="display: flex; justify-content: center; align-items: center;">
+                        <span style="font-size: 16px">融合影像</span>
+                      </div>
+                    </template>
+                    <a-image  :src=mixSrc />
+                    <template #footer>
+                      <div style="display: flex; justify-content: center; align-items: center;">
+                        <span @click="downloadMix" style="font-size: 24px; cursor: pointer;">
+                          <DownloadOutlined style="color: #52c41a" key="download" />
+                        </span>
+                      </div>
+                    </template>
+                  </el-card>
+                </a-col>
+                <a-col :span="12">
+                  <el-card  shadow="hover">
+                    <template #header>
+                      <div class="card-header" style="display: flex; justify-content: center; align-items: center;">
+                        <span style="font-size: 16px">掩膜影像</span>
+                      </div>
+                    </template>
+                    <a-image class="resultIMG"  :src=oriSrc />
+                    <template #footer>
+                      <div style="display: flex; justify-content: center; align-items: center;">
+                        <span @click="downloadOri" style="font-size: 24px; cursor: pointer;">
+                          <DownloadOutlined style="color: #52c41a" key="download" />
+                        </span>
+                      </div>
+                    </template>
+                  </el-card>
+                  <!-- 隐藏的 a 标签 -->
+                  <a ref="downloadLinkOri" style="display: none;" target="_blank"></a>
+                </a-col>
+              </a-row>
+              <div style="background-color: #ececec; padding: 20px">
+                <a-row :gutter="16">
+                  <a-col :span="8">
+                    <a-card hoverable title="保存为GeoTiff" :bordered="false">
+                      <p>card content</p>
+                    </a-card>
+                  </a-col>
+                  <a-col :span="8">
+                    <a-card hoverable title="保存为GeoJSON" :bordered="false">
+                      <p>card content</p>
+                    </a-card>
+                  </a-col>
+                  <a-col :span="8">
+                    <a-card hoverable title="保存为ShapeFile" :bordered="false">
+                      <p>card content</p>
+                    </a-card>
+                  </a-col>
+                </a-row>
+              </div>
             </div>
 
           </div>
@@ -531,7 +613,7 @@ function downloadIMG(){
             <ArgsForm :Args="Args" ref="extractionData"></ArgsForm>
           </div>
           <div v-if="currentStep === 2">
-            <ResultForm></ResultForm>
+            <ResultForm :Result="maskInfo"></ResultForm>
           </div>
         </a-card>
       </a-col>
@@ -685,6 +767,7 @@ a-card {
 :deep(.ant-image-img){
   height: 45.2vh;
 }
+
 </style>
 
 
