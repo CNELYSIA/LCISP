@@ -37,7 +37,7 @@ const handleChangePth = async (info) => {
 };
 
 const ModelOptions = [
-'LangSAM','YoloSAM'
+'LangSAM','YoloSAM','SGCNNet','LinkNet','UNet'
 ]
 const ExtractOptions = [
   '耕地','道路','屋顶'

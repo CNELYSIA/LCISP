@@ -33,12 +33,14 @@ function initMap() {
       new Tile({
         name: "高德",
         source: new XYZ({
+          maxZoom: 18,
           url: 'http://t0.tianditu.com/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=87522ceca48f384fc741bc830ebeace8',
         })
       }),
       new Tile({
         name: '高德',
         source: new XYZ({
+          maxZoom: 18,
           url: 'http://t0.tianditu.com/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=87522ceca48f384fc741bc830ebeace8',
           wrapX: false
         })
@@ -53,6 +55,7 @@ function initMap() {
       new Tile({
         name: "天地图",
         source: new XYZ({
+          maxZoom: 18,
           url: "http://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=87522ceca48f384fc741bc830ebeace8"
         }),
         visible: false
@@ -60,7 +63,7 @@ function initMap() {
     ],
     view: new View({
       projection: "EPSG:3857",
-      center: [13045531.126063729, 4394596.281632625],
+      center: [13044231.126063729, 4394596.281632625],
       zoom: 15,
       //设置缩放级别为整数
       constrainResolution: true,
@@ -166,6 +169,7 @@ function drawInteraction(val) {
             '绘制控件已从地图上移除',
         duration: 2,
       });
+      draw.value = null
       break;
     case "Clear": // 清空绘制
       notification.success({
@@ -364,12 +368,12 @@ function changeLayer(e) {
   message.success({
     content: () => '切换成功',
     style: {
-      marginLeft: '-50vw',
+      marginLeft: '-30vw',
     },
   });
 }
 message.config({
-  top: '5vh',
+  top: '12vh',
   duration: 2,
   maxCount: 1,
   rtl: true,
@@ -460,10 +464,89 @@ function downloadOri(){
   downloadLinkOri.value.click();
 
 }
+
+function getGeoTiff() {
+  if (Args.value && downloadOriName) {
+    const data = {
+      originalFileName: Args.value.file,
+      oriFileName: downloadOriName
+    };
+
+    proxy.postRequest('saveGeoTiff/', data, { responseType: 'blob' })
+        .then((response) => {
+          downloadLinkOri.value.href = `http://127.0.0.1:8000/download/?filename=${downloadOriName}`
+          downloadLinkOri.value.download = downloadOriName; // 设置下载文件名，确保正确解码
+          // 触发点击事件以开始下载
+          downloadLinkOri.value.click();
+
+          notification.success({
+            message: 'GeoTiff文件保存成功',
+            description: '文件已成功保存',
+            duration: 2,
+          });
+        })
+        .catch(() => {
+          notification.error({
+            message: '保存失败',
+            description: '请检查文件名是否正确',
+            duration: 2,
+          });
+        });
+  } else {
+    notification.error({
+      message: '文件名缺失',
+      description: '请确保文件名已正确获取',
+      duration: 2,
+    });
+  }
+}
+
+let shpName = ref("")
+
+function getShp() {
+  console.log(downloadOriName)
+  if (downloadOriName) {
+    const data = {
+      filename: downloadOriName
+    };
+
+    proxy.postRequest('saveShpFile/', data, { responseType: 'blob' })
+        .then((response) => {
+          // 创建下载链接
+          let downloadName = downloadOriName.split('.')[0] + '_shp.zip';
+          console.log(downloadName)
+          shpName = downloadName
+          downloadLinkOri.value.href = `http://127.0.0.1:8000/download/?filename=${downloadName}`
+          downloadLinkOri.value.download = downloadName; // 设置下载文件名，确保正确解码
+          // 触发点击事件以开始下载
+          downloadLinkOri.value.click();
+
+          notification.success({
+            message: 'Shapefile保存成功',
+            description: '文件已成功下载',
+            duration: 2,
+          });
+        })
+        .catch(() => {
+          notification.error({
+            message: '保存失败',
+            description: 'Shapefile生成失败，请检查文件名',
+            duration: 2,
+          });
+        });
+  } else {
+    notification.error({
+      message: '文件名缺失',
+      description: '请确保已生成原始文件',
+      duration: 2,
+    });
+  }
+}
+
 </script>
 
 <template>
-  <div class="puff-in-center" style="background-color: #e4e4e4; height: 100%; padding: 20px; position: absolute;width: 100%">
+  <div class="puff-in-center" style="height: 100%; padding: 20px; position: absolute;width: 100%">
     <a-row :gutter="16">
       <a-col :span="13" class="animated-card" :class="{'shrink-move-enlarge': currentStep !== 0, 'shrink-move-enlarge-out': currentStep !== 1}">
         <a-card>
@@ -549,20 +632,15 @@ function downloadOri(){
                 </a-col>
               </a-row>
               <div style="background-color: #ececec; padding: 20px">
-                <a-row :gutter="16">
-                  <a-col :span="8">
-                    <a-card hoverable title="保存为GeoTiff" :bordered="false">
-                      <p>card content</p>
+                <a-row :gutter="16" style="height: 200px">
+                  <a-col :span="12">
+                    <a-card @click="getGeoTiff" style="height: 20vh" hoverable :bordered="false">
+                      <p style="text-align: center; line-height: 180px;font-weight: 600; font-size: 32px">保存为GeoTiff</p>
                     </a-card>
                   </a-col>
-                  <a-col :span="8">
-                    <a-card hoverable title="保存为GeoJSON" :bordered="false">
-                      <p>card content</p>
-                    </a-card>
-                  </a-col>
-                  <a-col :span="8">
-                    <a-card hoverable title="保存为ShapeFile" :bordered="false">
-                      <p>card content</p>
+                  <a-col :span="12">
+                    <a-card @click="getShp" style="height: 20vh" hoverable :bordered="false">
+                      <p style="text-align: center; line-height: 180px;font-weight: 600; font-size: 32px" >保存为ShapeFile</p>
                     </a-card>
                   </a-col>
                 </a-row>
@@ -575,19 +653,19 @@ function downloadOri(){
       <a-col :span="11" class="animated-card" :class="{ 'move-left': currentStep === 1 }">
         <a-card class="formCard">
           <template #actions>
-            <a-button type="primary" shape="round" @click="formPrev" :disabled="currentStep === 0">
+            <a-button style="margin-top: 170px" type="primary" shape="round" @click="formPrev" :disabled="currentStep === 0">
               <template #icon>
                 <LeftOutlined />
               </template>
               上一步
             </a-button>
-            <a-button type="primary" shape="round" @click="formNext" :disabled="currentStep !== 0" :loading="nextLoading">
+            <a-button style="margin-top: 170px" type="primary" shape="round" @click="formNext" :disabled="currentStep !== 0" :loading="nextLoading">
               <template #icon>
                 <RightOutlined />
               </template>
               下一步
             </a-button>
-            <a-button type="primary" shape="round" :disabled="currentStep !== 1" @click="submit" :loading="submitLoading">
+            <a-button style="margin-top: 170px" type="primary" shape="round" :disabled="currentStep !== 1" @click="submit" :loading="submitLoading">
               <template #icon>
                 <CheckOutlined/>
               </template>
@@ -671,7 +749,7 @@ html, body{
   position: relative;
 }
 .formCard{
-  height: 96.10vh;
+  height: 113.2vh;
   overflow: auto;
   scrollbar-color: #ccc #f0f0f0;
   -ms-overflow-style: none;  /* 隐藏滚动条 */
@@ -679,13 +757,13 @@ html, body{
 }
 
 #map {
-  height: 93.8vh; /* 设置地图高度为视口高度 */
+  height: 111vh; /* 设置地图高度为视口高度 */
   border-radius: 5px;
   border: 1px solid rgba(255, 255, 255, 0.81);
   overflow: hidden;
 }
 #imgContain{
-  height: 93.8vh; /* 设置地图高度为视口高度 */
+  height: 111vh; /* 设置地图高度为视口高度 */
   border-radius: 5px;
   border: 1px solid rgba(255, 255, 255, 0.81);
   overflow: hidden;
@@ -765,7 +843,7 @@ a-card {
   visibility: visible;
 }
 :deep(.ant-image-img){
-  height: 45.2vh;
+  height: 68.2vh;
 }
 
 </style>
