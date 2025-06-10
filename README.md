@@ -2,7 +2,7 @@
 
 开发者: ZRZ
 
-特别鸣谢：
+# 特别鸣谢：
 HKUDS/LightRAG: "LightRAG: Simple and Fast Retrieval-Augmented Generation" https://github.com/HKUDS/LightRAG
 luca-medeiros/lang-segment-anything: SAM with text prompt https://github.com/luca-medeiros/lang-segment-anything
 QwenLM/Qwen-Agent: Agent framework and applications built upon Qwen>=3.0, featuring Function Calling, MCP, Code Interpreter, RAG, Chrome extension, etc. https://github.com/QwenLM/Qwen-Agent
