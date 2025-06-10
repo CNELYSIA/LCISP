@@ -1,5 +1,11 @@
-# Vue 3 + Vite
+# 地表覆盖智能服务平台
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+开发者: ZRZ
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+特别鸣谢：
+HKUDS/LightRAG: "LightRAG: Simple and Fast Retrieval-Augmented Generation" https://github.com/HKUDS/LightRAG
+luca-medeiros/lang-segment-anything: SAM with text prompt https://github.com/luca-medeiros/lang-segment-anything
+QwenLM/Qwen-Agent: Agent framework and applications built upon Qwen>=3.0, featuring Function Calling, MCP, Code Interpreter, RAG, Chrome extension, etc. https://github.com/QwenLM/Qwen-Agent
+tist0bsc/SGCN: Split Depth-wise Separable Graph Convolution Network for Road Extraction in Complex Environment from High-resolution Remote Sensing Imagery https://github.com/tist0bsc/SGCN
+......
+感谢各位开源开发者的无私奉献，请允许我向广大开源开发者致以崇高的敬意
